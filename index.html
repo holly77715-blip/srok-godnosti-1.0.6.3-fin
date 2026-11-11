@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Сроки годности</title>
+<meta name="theme-color" content="#2563eb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Сроки годности">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1f2933;
+    --muted: #6b7785;
+    --border: #d5dbe3;
+    --accent: #2563eb;
+    --accent-dark: #1d4ed8;
+    --ok: #15803d;
+    --warn: #b45309;
+    --bad: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.4;
+  }
+  .wrap { max-width: 1000px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0 16px; }
+  h2 { font-size: 17px; margin: 0 0 12px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .row { display: grid; gap: 12px; grid-template-columns: repeat(3, 1fr); }
+  .row.four { grid-template-columns: 2fr 1fr 1fr 1fr; }
+  .row.five { grid-template-columns: 2fr .8fr 1fr 1fr 1fr; }
+  .two { display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 680px) {
+    .row, .row.four, .row.five { grid-template-columns: 1fr; }
+  }
+  .field { margin-top: 12px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+  input[type="text"], input[type="date"], input[type="number"] {
+    width: 100%;
+    padding: 9px 10px;
+    font-size: 16px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #fff;
+    color: var(--text);
+  }
+  input[readonly] { background: #eef2f7; font-weight: 600; }
+  input:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  button {
+    padding: 9px 16px;
+    font-size: 15px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: #fff;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: var(--accent-dark); }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  button.secondary { background: #fff; color: var(--accent); }
+  button.secondary:hover:not(:disabled) { background: #eff4ff; }
+  button.danger { background: #fff; color: var(--bad); border-color: var(--bad); }
+  button.danger:hover:not(:disabled) { background: #fef2f2; }
+  button.dangersolid { background: var(--bad); border-color: var(--bad); color: #fff; }
+  button.dangersolid:hover:not(:disabled) { background: #991b1b; }
+  button.small { padding: 5px 10px; font-size: 13px; }
+  .ig { display: flex; gap: 6px; align-items: stretch; }
+  .ig input { flex: 1; min-width: 0; }
+  .sq {
+    width: 42px; min-width: 42px; padding: 0;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .sq svg { width: 22px; height: 22px; }
+  .bcprev { display: none; margin-top: 8px; }
+  .bcprev.on { display: block; }
+  img.bc {
+    display: block; max-width: 190px; width: 100%; height: auto;
+    margin-top: 6px; border: 1px solid var(--border); border-radius: 4px; background: #fff;
+  }
+  .bcprev img.bc { margin-top: 0; }
+  .actions { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  .hint { font-size: 12.5px; color: var(--muted); margin-top: 8px; }
+  .error { color: var(--bad); font-size: 13px; margin-top: 8px; min-height: 18px; }
+  .msg { font-size: 13px; margin-top: 10px; min-height: 18px; color: var(--muted); }
+  .msg.err { color: var(--bad); }
+  .msg.ok { color: var(--ok); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 12.5px; }
+  .st-ok { color: var(--ok); font-weight: 600; }
+  .st-warn { color: var(--warn); font-weight: 600; }
+  .st-bad { color: var(--bad); font-weight: 600; }
+  .empty { color: var(--muted); padding: 10px 0; }
+  .rowbtns { display: flex; gap: 6px; flex-wrap: wrap; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--text); margin: 0; cursor: pointer; }
+  .check input { width: 18px; height: 18px; }
+  .repview {
+    display: none;
+    margin-top: 12px;
+    padding: 10px;
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: #fafbfc;
+    color: var(--text);
+  }
+  .repview.on { display: block; }
+  .repview .red { color: #c00000; font-weight: 700; }
+  .legend { font-size: 12.5px; margin-top: 8px; color: #c00000; }
+  .tablewrap { overflow-x: auto; }
+  @media (max-width: 680px) {
+    table, tbody, tr, td { display: block; }
+    thead { display: none; }
+    tr {
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; margin-bottom: 10px; background: #fff;
+    }
+    td { border: none; padding: 3px 0; display: flex; gap: 10px; align-items: baseline; }
+    td::before {
+      content: attr(data-label); color: var(--muted); font-size: 12.5px;
+      font-weight: 600; min-width: 96px; flex-shrink: 0;
+    }
+    td.acts { padding-top: 8px; }
+    td.acts::before { display: none; }
+    td .note { min-width: 0; word-break: break-word; }
+  }
+
+  [hidden] { display: none !important; }
+  .three { display: grid; gap: 10px; align-items: end; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .hit {
+    display: flex; gap: 10px; align-items: center; justify-content: space-between;
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; margin-top: 8px;
+  }
+  .hit-main { min-width: 0; flex: 1; }
+  .hit-note { font-weight: 600; word-break: break-word; }
+  .hit-meta { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .hit button { flex-shrink: 0; }
+
+  /* Диалоги */
+  .overlay {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, .5);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: auto;
+  }
+  .modal {
+    background: #fff; border-radius: 12px; padding: 16px;
+    width: 100%; max-width: 460px; max-height: 100%; overflow: auto;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, .3);
+  }
+  .modal h2 { margin-bottom: 8px; }
+  .mtext { margin: 0 0 4px; font-size: 15px; word-break: break-word; }
+  .mbtns { display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap; margin-top: 16px; }
+  .vwrap {
+    position: relative; background: #000; border-radius: 8px; overflow: hidden;
+    min-height: 220px;
+  }
+  .vwrap video { width: 100%; height: 100%; min-height: 220px; max-height: 50vh; object-fit: cover; display: block; }
+  .aim {
+    position: absolute; left: 8%; right: 8%; top: 28%; bottom: 28%;
+    border: 2px solid rgba(255, 255, 255, .9); border-radius: 8px;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, .25); pointer-events: none;
+  }
+  .scanstatus { font-size: 13px; color: var(--muted); margin: 8px 0; min-height: 36px; }
+  .scanstatus.err { color: var(--bad); }
+
+  /* Плашка «Истекающие сроки» */
+  .expiring { border-color: #e9a3a3; background: #fff6f6; }
+  .expiring h2 { color: var(--bad); margin-bottom: 4px; }
+  .expiring .hint { margin: 0 0 6px; }
+  .exp-list { max-height: 300px; overflow: auto; }
+  .expiring .hit { background: #fff; }
+  .notifbar { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 12px 16px; }
+  select { width: 100%; padding: 9px 10px; font-size: 16px; border: 1px solid var(--border); border-radius: 7px; background: #fff; color: var(--text); }
+  select:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: var(--accent); }
+  tr.grp td { background: #eef2f7; font-weight: 700; padding: 8px 6px; }
+  @media (max-width: 680px) { tr.grp { background: #eef2f7; } tr.grp td { display: block; } tr.grp td::before { display: none; } }
+  .notifbar .ntext { font-size: 14px; flex: 1; min-width: 200px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Подсчёт сроков годности</h1>
+
+  <!-- Истекающие сроки: осталось 40 дней и меньше -->
+  <div class="card expiring" id="expCard" hidden>
+    <h2>Истекающие сроки <span id="expCount"></span></h2>
+    <div class="hint">Осталось 40 дней и меньше, а также просроченные.</div>
+    <div class="exp-list" id="expList"></div>
+  </div>
+  <div class="card notifbar" id="notifBar" hidden>
+    <div class="ntext" id="notifText"></div>
+    <button type="button" id="notifBtn" hidden>Включить уведомления</button>
+  </div>
+
+  <!-- Поиск по записям -->
+  <div class="card">
+    <h2>Поиск по отчёту</h2>
+    <div class="ig">
+      <input type="text" id="sQuery" placeholder="Фраза, символы или номер EAN..." autocomplete="off" aria-label="Поиск по примечаниям">
+      <button type="button" class="sq secondary" id="sClear" title="Очистить поиск" aria-label="Очистить поиск" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+      <button type="button" class="sq secondary" id="sScan" title="Найти запись по штрихкоду (камера)" aria-label="Найти запись по штрихкоду">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M12.5 8v8M16 8v8"/></svg>
+      </button>
+    </div>
+    <div class="msg" id="sMsg" role="status" aria-live="polite"></div>
+    <div id="sRes"></div>
+  </div>
+
+  <!-- Быстрый калькулятор без примечаний -->
+  <div class="card">
+    <h2>Быстрый расчёт</h2>
+    <div class="row">
+      <div>
+        <label for="qDate">Дата изготовления</label>
+        <input type="date" id="qDate">
+      </div>
+      <div>
+        <label for="qMonths">Срок хранения (месяцев)</label>
+        <input type="number" id="qMonths" min="0" max="1200" step="1" placeholder="например, 12">
+      </div>
+      <div>
+        <label for="qEnd">Дата окончания срока годности</label>
+        <input type="text" id="qEnd" readonly placeholder="—">
+      </div>
+    </div>
+    <div class="hint" id="qInfo"></div>
+  </div>
+
+  <!-- Записи -->
+  <div class="card">
+    <h2>Записи с примечаниями</h2>
+    <div>
+      <div>
+        <label for="rNote">Примечание</label>
+        <div class="ig">
+          <input type="text" id="rNote" placeholder="Название, партия, место...">
+          <button type="button" class="sq secondary" id="rScan" title="Сканировать штрихкод камерой" aria-label="Сканировать штрихкод камерой">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>
+          </button>
+        </div>
+        <div class="bcprev" id="rBc"></div>
+      </div>
+      <div class="field">
+        <label for="rDept">Отдел (необязательно)</label>
+        <input type="text" id="rDept" list="deptList" maxlength="60" autocomplete="off" placeholder="Выберите из списка или введите новый">
+        <datalist id="deptList"></datalist>
+      </div>
+      <div class="three field">
+        <div>
+          <label for="rTara">Тара</label>
+          <input type="text" id="rTara" inputmode="decimal" autocomplete="off" placeholder="0,5">
+        </div>
+        <div>
+          <label for="rQty">Количество (шт.)</label>
+          <input type="number" id="rQty" min="0" max="999999" step="1" inputmode="numeric" placeholder="шт.">
+        </div>
+        <div>
+          <label for="rTotal">Общий объём</label>
+          <input type="text" id="rTotal" readonly placeholder="—">
+        </div>
+      </div>
+      <div class="hint">Тара и количество необязательны. Общий объём = тара × количество.</div>
+      <div class="row field">
+      <div>
+        <label for="rDate">Дата выпуска</label>
+        <input type="date" id="rDate">
+      </div>
+      <div>
+        <label for="rMonths">Срок годности (мес.)</label>
+        <input type="number" id="rMonths" min="0" max="1200" step="1" placeholder="12">
+      </div>
+      <div>
+        <label for="rEnd">Годен до</label>
+        <input type="text" id="rEnd" readonly placeholder="—">
+      </div>
+      </div>
+    </div>
+    <div class="actions">
+      <button id="addBtn">Добавить запись</button>
+      <button id="clearBtn" class="secondary">Очистить все записи</button>
+    </div>
+    <div class="error" id="rError"></div>
+
+    <div class="field" id="deptWrap" hidden>
+      <label for="deptFilter">Показать отдел</label>
+      <select id="deptFilter"></select>
+    </div>
+    <div class="tablewrap">
+      <table id="tbl" style="display:none">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Примечание</th>
+            <th>Кол-во</th>
+            <th>Тара</th>
+            <th>Общий объём</th>
+            <th>Дата выпуска</th>
+            <th>Срок (мес.)</th>
+            <th>Годен до</th>
+            <th>Статус</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="emptyMsg">Записей пока нет.</div>
+  </div>
+
+  <!-- Отчёт -->
+  <div class="card">
+    <h2>Отчёт</h2>
+    <label class="check">
+      <input type="checkbox" id="reportChk">
+      Создать отчёт
+    </label>
+    <div id="reportText" class="repview"></div>
+    <div class="actions">
+      <button id="exportBtn" disabled>Экспорт в txt</button>
+      <button id="xlsxBtn" disabled>Экспорт в Excel</button>
+      <button id="pdfBtn" disabled>Отчёт в PDF</button>
+      <button id="importBtn" class="secondary">Импорт отчёта</button>
+      <input type="file" id="importFile" accept=".txt,text/plain" style="display:none">
+    </div>
+    <div class="msg" id="reportMsg" role="status" aria-live="polite"></div>
+    <div class="legend">Красным отмечены сроки: осталось 60 дней и меньше (и просроченные).</div>
+    <div class="hint">Отметьте галочку, чтобы сформировать отчёт и включить кнопки экспорта. Импорт принимает txt-файл, сохранённый этой страницей.</div>
+  </div>
+</div>
+
+<!-- ===== Ядро штрихкодов (без DOM) ===== -->
+<script>
+// BEGIN-CORE
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+
+var EAN_L = ["0001101","0011001","0010011","0111101","0100011","0110001","0101111","0111011","0110111","0001011"];
+var EAN_R = EAN_L.map(function (s) {
+  return s.split("").map(function (c) { return c === "0" ? "1" : "0"; }).join("");
+});
+var EAN_G = EAN_R.map(function (s) { return s.split("").reverse().join(""); });
+var EAN_PARITY = ["LLLLLL","LLGLGG","LLGGLG","LLGGGL","LGLLGG","LGGLLG","LGGGLL","LGLGLG","LGLGGL","LGGLGL"];
+
+function rle(s) {
+  var r = [], c = 1, i;
+  for (i = 1; i < s.length; i++) {
+    if (s.charAt(i) === s.charAt(i - 1)) c++; else { r.push(c); c = 1; }
+  }
+  r.push(c);
+  return r;
+}
+var PAT_L = EAN_L.map(rle), PAT_G = EAN_G.map(rle), PAT_R = EAN_R.map(rle);
+
+// Проверка контрольной цифры EAN-13 / EAN-8
+function eanValid(code) {
+  if (!/^(\d{8}|\d{13})$/.test(code)) return false;
+  var n = code.length, sum = 0, i;
+  for (i = 0; i < n - 1; i++) {
+    sum += (+code.charAt(n - 2 - i)) * ((i % 2 === 0) ? 3 : 1);
+  }
+  return ((10 - sum % 10) % 10) === +code.charAt(n - 1);
+}
+
+// Последовательность модулей штрихкода ("1" — чёрная полоса)
+function eanModules(code) {
+  var n = code.length, bits = "101", i, par;
+  if (n === 13) {
+    par = EAN_PARITY[+code.charAt(0)];
+    for (i = 1; i <= 6; i++) bits += (par.charAt(i - 1) === "L" ? EAN_L : EAN_G)[+code.charAt(i)];
+    bits += "01010";
+    for (i = 7; i <= 12; i++) bits += EAN_R[+code.charAt(i)];
+  } else {
+    for (i = 0; i < 4; i++) bits += EAN_L[+code.charAt(i)];
+    bits += "01010";
+    for (i = 4; i < 8; i++) bits += EAN_R[+code.charAt(i)];
+  }
+  return bits + "101";
+}
+
+// Номер EAN в тексте примечания: "EAN: 4600..." (только с корректной контрольной цифрой)
+var EAN_RE = /EAN[\s:№#\-]*(\d{13}|\d{8})(?!\d)/i;
+function findEan(text) {
+  var m = EAN_RE.exec(String(text || ""));
+  return (m && eanValid(m[1])) ? m[1] : "";
+}
+
+// Код из сканера -> корректный EAN или ""
+function normalizeScanned(t) {
+  t = String(t || "").replace(/\D/g, "");
+  if (t.length === 12) t = "0" + t; // UPC-A
+  return eanValid(t) ? t : "";
+}
+
+// ---- Распознавание по строке яркости ----
+function matchDigit(w, pats) {
+  var total = w[0] + w[1] + w[2] + w[3];
+  if (total < 4) return null;
+  var unit = total / 7, best = -1, bestErr = 1e9, d, k, p, sum, mx, e;
+  for (d = 0; d < pats.length; d++) {
+    p = pats[d]; sum = 0; mx = 0;
+    for (k = 0; k < 4; k++) {
+      e = Math.abs(w[k] / unit - p[k]);
+      sum += e;
+      if (e > mx) mx = e;
+    }
+    if (mx > 0.75) continue;
+    if (sum / 4 < bestErr) { bestErr = sum / 4; best = d; }
+  }
+  if (best < 0 || bestErr > 0.4) return null;
+  return { d: best, err: bestErr, unit: unit };
+}
+
+function matchLeft(w) {
+  var a = matchDigit(w, PAT_L), b = matchDigit(w, PAT_G);
+  if (!a && !b) return null;
+  if (a && (!b || a.err <= b.err)) return { d: a.d, p: "L", unit: a.unit };
+  return { d: b.d, p: "G", unit: b.unit };
+}
+
+function decodeAt(w, i, n) {
+  var half = (n === 13) ? 6 : 4;
+  var need = 3 + half * 4 + 5 + half * 4 + 3;
+  if (i + need > w.length) return null;
+  var m = (w[i] + w[i + 1] + w[i + 2]) / 3;
+  var j = i + 3, k, x, r, left = [], right = [], par = "";
+  for (k = 0; k < half; k++, j += 4) {
+    var ww = [w[j], w[j + 1], w[j + 2], w[j + 3]];
+    if (n === 13) {
+      r = matchLeft(ww);
+    } else {
+      var a = matchDigit(ww, PAT_L);
+      r = a ? { d: a.d, p: "L", unit: a.unit } : null;
+    }
+    if (!r || r.unit < 0.55 * m || r.unit > 1.8 * m) return null;
+    left.push(r.d); par += r.p;
+  }
+  for (k = 0; k < 5; k++) {
+    x = w[j + k];
+    if (x < 0.45 * m || x > 1.9 * m) return null;
+  }
+  j += 5;
+  for (k = 0; k < half; k++, j += 4) {
+    var a2 = matchDigit([w[j], w[j + 1], w[j + 2], w[j + 3]], PAT_R);
+    if (!a2 || a2.unit < 0.55 * m || a2.unit > 1.8 * m) return null;
+    right.push(a2.d);
+  }
+  for (k = 0; k < 3; k++) {
+    x = w[j + k];
+    if (x < 0.45 * m || x > 1.9 * m) return null;
+  }
+  if (j + 3 >= w.length || w[j + 3] < 3 * m) return null; // свободная зона после кода
+  var code = "";
+  if (n === 13) {
+    var f = EAN_PARITY.indexOf(par);
+    if (f < 0) return null;
+    code = String(f);
+  }
+  code += left.join("") + right.join("");
+  return eanValid(code) ? code : null;
+}
+
+function decodeRuns(w, firstDark) {
+  for (var i = 1; i < w.length - 2; i++) {
+    if (((i % 2) === 0) !== firstDark) continue; // стартовая полоса должна быть чёрной
+    var a = w[i], b = w[i + 1], c = w[i + 2];
+    var m = (a + b + c) / 3;
+    if (m < 1.6) continue;
+    if (a < 0.6 * m || a > 1.6 * m || b < 0.6 * m || b > 1.6 * m || c < 0.6 * m || c > 1.6 * m) continue;
+    if (w[i - 1] < 3 * m) continue; // свободная зона перед кодом
+    var r = decodeAt(w, i, 13) || decodeAt(w, i, 8);
+    if (r) return r;
+  }
+  return null;
+}
+
+// Строка яркости -> длины серий {w, firstDark}
+function lineRuns(lum, off, stride, len, mode) {
+  var i, v = new Float32Array(len), s = new Float32Array(len), thr = new Float32Array(len);
+  for (i = 0; i < len; i++) v[i] = lum[off + i * stride];
+  s[0] = v[0]; s[len - 1] = v[len - 1];
+  for (i = 1; i < len - 1; i++) s[i] = (v[i - 1] + 2 * v[i] + v[i + 1]) / 4;
+
+  var hist = new Array(256), t;
+  for (t = 0; t < 256; t++) hist[t] = 0;
+  for (i = 0; i < len; i++) hist[Math.max(0, Math.min(255, Math.round(s[i])))]++;
+  var acc = 0, lo = 0, hi = 255, cut5 = len * 0.05, cut95 = len * 0.95, gotLo = false;
+  for (t = 0; t < 256; t++) {
+    acc += hist[t];
+    if (!gotLo && acc >= cut5) { lo = t; gotLo = true; }
+    if (acc >= cut95) { hi = t; break; }
+  }
+  if (hi - lo < 30) return null; // слишком низкий контраст
+
+  if (mode === 0) {
+    var g = (lo + hi) / 2;
+    for (i = 0; i < len; i++) thr[i] = g;
+  } else {
+    var R = Math.max(8, (len / 10) | 0), pre = new Float64Array(len + 1);
+    for (i = 0; i < len; i++) pre[i + 1] = pre[i] + s[i];
+    for (i = 0; i < len; i++) {
+      var a = Math.max(0, i - R), b = Math.min(len, i + R + 1);
+      thr[i] = (pre[b] - pre[a]) / (b - a) - 2;
+    }
+  }
+
+  var w = [], firstDark = s[0] < thr[0], cur = firstDark, run = 1;
+  for (i = 1; i < len; i++) {
+    var d = s[i] < thr[i];
+    if (d === cur) run++; else { w.push(run); run = 1; cur = d; }
+  }
+  w.push(run);
+  if (w.length > 600) return null; // шум
+  return { w: w, firstDark: firstDark };
+}
+
+function decodeLine(lum, off, stride, len) {
+  for (var mode = 0; mode < 2; mode++) {
+    var rr = lineRuns(lum, off, stride, len, mode);
+    if (!rr) continue;
+    var res = decodeRuns(rr.w, rr.firstDark);
+    if (res) return res;
+    var lastDark = (((rr.w.length - 1) % 2) === 0) === rr.firstDark;
+    res = decodeRuns(rr.w.slice().reverse(), lastDark);
+    if (res) return res;
+  }
+  return null;
+}
+
+// Кадр: lum — яркость W*H. Проверяются горизонтальные и вертикальные линии от центра к краям.
+// Код принимается, только если его независимо прочитали минимум две разные линии кадра.
+function scanFrame(lum, W, H) {
+  var k, N = 40, res, ys = [], xs = [], found = {};
+  for (k = 0; k <= N; k++) {
+    ys.push(Math.round((H - 1) * (0.08 + 0.84 * k / N)));
+    xs.push(Math.round((W - 1) * (0.08 + 0.84 * k / N)));
+  }
+  ys.sort(function (a, b) { return Math.abs(a - H / 2) - Math.abs(b - H / 2); });
+  xs.sort(function (a, b) { return Math.abs(a - W / 2) - Math.abs(b - W / 2); });
+  for (k = 0; k < ys.length; k++) {
+    res = decodeLine(lum, ys[k] * W, 1, W);
+    if (res) { found[res] = (found[res] || 0) + 1; if (found[res] >= 2) return res; }
+  }
+  for (k = 0; k < xs.length; k++) {
+    res = decodeLine(lum, xs[k], W, H);
+    if (res) { found[res] = (found[res] || 0) + 1; if (found[res] >= 2) return res; }
+  }
+  return null;
+}
+
+// ---- Числа: тара, штуки, общий объём ----
+function round6(x) { return Math.round(x * 1e6) / 1e6; }
+function parseNum(s) { // "" -> null; "0,5" -> 0.5; неверное значение -> NaN
+  s = String(s === null || s === undefined ? "" : s).replace(/\s+/g, "").replace(",", ".");
+  if (s === "" || s === "—") return null;
+  if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+  var n = Number(s);
+  return (isFinite(n) && n <= 1000000) ? n : NaN;
+}
+function fmtNum(n) {
+  return (n === null || n === undefined || n !== n) ? "—" : String(round6(n)).replace(".", ",");
+}
+function totalVol(t, p) {
+  return (t == null || p == null || t !== t || p !== p) ? null : round6(t * p);
+}
+function normText(s) {
+  return String(s === null || s === undefined ? "" : s).toLowerCase().replace(/ё/g, "е");
+}
+
+// ---- Разбор отчёта из txt ----
+function isoFromDMY(d, m, y) {
+  var dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return y + "-" + pad(m) + "-" + pad(d);
+}
+
+function parseReport(text) {
+  text = String(text).replace(/^﻿/, "");
+  var lines = text.split(/\r\n|\r|\n/), recs = [], cur = null, bad = 0, i, m;
+  function flush() {
+    if (!cur) return;
+    if (cur.made && cur.months !== null && cur.months <= 1200) {
+      recs.push({ note: cur.note, made: cur.made, months: cur.months, qty: cur.qty, tara: cur.tara, dept: cur.dept });
+    } else { bad++; }
+    cur = null;
+  }
+  for (i = 0; i < lines.length; i++) {
+    var ln = lines[i];
+    m = /^\s*\d+\.\s*Примечание:\s?(.*)$/.exec(ln);
+    if (m) {
+      flush();
+      var nt = m[1].trim();
+      cur = { note: nt === "—" ? "" : nt, made: null, months: null, qty: null, tara: null, dept: "" };
+      continue;
+    }
+    if (!cur) continue;
+    m = /^\s*Дата выпуска:\s*(\d{1,2})\.(\d{1,2})\.(\d{4})/.exec(ln);
+    if (m) { cur.made = isoFromDMY(+m[1], +m[2], +m[3]); continue; }
+    m = /^\s*Срок годности:\s*(\d+)/.exec(ln);
+    if (m) { cur.months = +m[1]; continue; }
+    m = /^\s*Отдел:\s*(.*)$/.exec(ln);
+    if (m) { cur.dept = m[1].trim().slice(0, 60); continue; }
+    m = /^\s*Тара:\s*(.*)$/.exec(ln);
+    if (m) { var tv = parseNum(m[1]); cur.tara = (tv === null || tv !== tv) ? null : round6(tv); continue; }
+    m = /^\s*Количество:\s*(\d+)/.exec(ln);
+    if (m) { if (+m[1] <= 999999) cur.qty = +m[1]; continue; }
+  }
+  flush();
+  return { records: recs, bad: bad };
+}
+
+// ---- Байты ----
+function utf8Bytes(s) {
+  var b = unescape(encodeURIComponent(s)), a = new Uint8Array(b.length), i;
+  for (i = 0; i < b.length; i++) a[i] = b.charCodeAt(i);
+  return a;
+}
+function asciiBytes(s) {
+  var a = new Uint8Array(s.length), i;
+  for (i = 0; i < s.length; i++) a[i] = s.charCodeAt(i) & 255;
+  return a;
+}
+function concatBytes(list) {
+  var n = 0, i, o = 0;
+  for (i = 0; i < list.length; i++) n += list[i].length;
+  var out = new Uint8Array(n);
+  for (i = 0; i < list.length; i++) { out.set(list[i], o); o += list[i].length; }
+  return out;
+}
+
+// ---- ZIP (без сжатия) ----
+var CRC_TABLE = null;
+function crc32(buf) {
+  var n, k, c, i;
+  if (!CRC_TABLE) {
+    CRC_TABLE = new Uint32Array(256);
+    for (n = 0; n < 256; n++) {
+      c = n;
+      for (k = 0; k < 8; k++) c = (c & 1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1);
+      CRC_TABLE[n] = c >>> 0;
+    }
+  }
+  var crc = 0xFFFFFFFF;
+  for (i = 0; i < buf.length; i++) crc = CRC_TABLE[(crc ^ buf[i]) & 255] ^ (crc >>> 8);
+  return (crc ^ 0xFFFFFFFF) >>> 0;
+}
+function zipStore(files) {
+  var parts = [], central = [], offset = 0, i;
+  var dosTime = 0, dosDate = ((2026 - 1980) << 9) | (1 << 5) | 1;
+  function u16(v) { return [v & 255, (v >>> 8) & 255]; }
+  function u32(v) { return [v & 255, (v >>> 8) & 255, (v >>> 16) & 255, (v >>> 24) & 255]; }
+  for (i = 0; i < files.length; i++) {
+    var nm = utf8Bytes(files[i].name), d = files[i].data, crc = crc32(d);
+    var lh = new Uint8Array([0x50, 0x4B, 3, 4].concat(u16(20), u16(0x0800), u16(0), u16(dosTime), u16(dosDate),
+      u32(crc), u32(d.length), u32(d.length), u16(nm.length), u16(0)));
+    parts.push(lh, nm, d);
+    var ch = new Uint8Array([0x50, 0x4B, 1, 2].concat(u16(20), u16(20), u16(0x0800), u16(0), u16(dosTime), u16(dosDate),
+      u32(crc), u32(d.length), u32(d.length), u16(nm.length), u16(0), u16(0), u16(0), u16(0), u32(0), u32(offset)));
+    central.push(ch, nm);
+    offset += lh.length + nm.length + d.length;
+  }
+  var cdSize = 0;
+  for (i = 0; i < central.length; i++) cdSize += central[i].length;
+  var end = new Uint8Array([0x50, 0x4B, 5, 6].concat(u16(0), u16(0), u16(files.length), u16(files.length), u32(cdSize), u32(offset), u16(0)));
+  return concatBytes(parts.concat(central, [end]));
+}
+
+// ---- XLSX ----
+function xmlEsc(s) {
+  return String(s).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+// rows: [{n, note, ean, qty|null, madeSerial, months, endSerial, daysLeft, status, crit}]
+function buildXlsx(rows) {
+  var heads = ["№", "Примечание", "Отдел", "EAN", "Количество (шт.)", "Тара", "Общий объём", "Дата выпуска", "Срок годности (мес.)", "Годен до", "Осталось дней", "Статус"];
+  var widths = [5, 38, 18, 16, 14, 10, 14, 14, 14, 14, 14, 28];
+  var HDR = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n';
+  var NS = 'xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"';
+  var REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+  var colL = "ABCDEFGHIJKL";
+  function strCell(ref, st, txt) { return '<c r="' + ref + '" s="' + st + '" t="inlineStr"><is><t xml:space="preserve">' + xmlEsc(txt) + "</t></is></c>"; }
+  function numCell(ref, st, v) { return '<c r="' + ref + '" s="' + st + '"><v>' + v + "</v></c>"; }
+  function blankCell(ref, st) { return '<c r="' + ref + '" s="' + st + '"/>'; }
+  var sd = '<row r="1" ht="32" customHeight="1">', i;
+  for (i = 0; i < heads.length; i++) sd += strCell(colL.charAt(i) + "1", 1, heads[i]);
+  sd += "</row>";
+  rows.forEach(function (r, k) {
+    var n = k + 2, red = !!r.crit;
+    sd += '<row r="' + n + '">' +
+      numCell("A" + n, 4, r.n) +
+      strCell("B" + n, 2, r.note || "") +
+      strCell("C" + n, 2, r.dept || "") +
+      strCell("D" + n, 2, r.ean || "") +
+      (r.qty == null ? blankCell("E" + n, 4) : numCell("E" + n, 4, r.qty)) +
+      (r.tara == null ? blankCell("F" + n, 4) : numCell("F" + n, 4, r.tara)) +
+      (r.total == null ? blankCell("G" + n, 4) : numCell("G" + n, 4, r.total)) +
+      numCell("H" + n, 3, r.madeSerial) +
+      numCell("I" + n, 4, r.months) +
+      numCell("J" + n, red ? 6 : 3, r.endSerial) +
+      numCell("K" + n, red ? 7 : 4, r.daysLeft) +
+      strCell("L" + n, red ? 5 : 2, r.status) +
+      "</row>";
+  });
+  var last = rows.length + 1;
+  var cols = "";
+  for (i = 0; i < widths.length; i++) cols += '<col min="' + (i + 1) + '" max="' + (i + 1) + '" width="' + widths[i] + '" customWidth="1"/>';
+  var sheet = HDR + "<worksheet " + NS + '><dimension ref="A1:L' + last + '"/>' +
+    '<sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>' +
+    '<selection pane="bottomLeft" activeCell="A2" sqref="A2"/></sheetView></sheetViews>' +
+    '<sheetFormatPr defaultRowHeight="15"/><cols>' + cols + "</cols><sheetData>" + sd + "</sheetData>" +
+    '<autoFilter ref="A1:L' + last + '"/></worksheet>';
+
+  var styles = HDR + "<styleSheet " + NS + ">" +
+    '<numFmts count="1"><numFmt numFmtId="164" formatCode="dd\\.mm\\.yyyy"/></numFmts>' +
+    '<fonts count="3"><font><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><name val="Calibri"/></font>' +
+    '<font><b/><sz val="11"/><color rgb="FFC00000"/><name val="Calibri"/></font></fonts>' +
+    '<fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill>' +
+    '<fill><patternFill patternType="solid"><fgColor rgb="FFD9E2F3"/><bgColor indexed="64"/></patternFill></fill></fills>' +
+    '<borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border>' +
+    '<border><left style="thin"><color rgb="FFBFBFBF"/></left><right style="thin"><color rgb="FFBFBFBF"/></right>' +
+    '<top style="thin"><color rgb="FFBFBFBF"/></top><bottom style="thin"><color rgb="FFBFBFBF"/></bottom><diagonal/></border></borders>' +
+    '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>' +
+    '<cellXfs count="8">' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>' +
+    '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf>' +
+    '<xf numFmtId="164" fontId="2" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    '<xf numFmtId="0" fontId="2" fillId="0" borderId="1" xfId="0" applyFont="1" applyBorder="1" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf>' +
+    "</cellXfs>" +
+    '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>';
+
+  var wb = HDR + "<workbook " + NS + ' xmlns:r="' + REL + '">' +
+    '<bookViews><workbookView xWindow="0" yWindow="0" windowWidth="20000" windowHeight="10000"/></bookViews>' +
+    '<sheets><sheet name="Сроки годности" sheetId="1" r:id="rId1"/></sheets>' +
+    '<definedNames><definedName name="_xlnm._FilterDatabase" localSheetId="0" hidden="1">' +
+    "'Сроки годности'!$A$1:$L$" + last + "</definedName></definedNames></workbook>";
+
+  var PKG = "http://schemas.openxmlformats.org/package/2006/relationships";
+  var wbRels = HDR + '<Relationships xmlns="' + PKG + '">' +
+    '<Relationship Id="rId1" Type="' + REL + '/worksheet" Target="worksheets/sheet1.xml"/>' +
+    '<Relationship Id="rId2" Type="' + REL + '/styles" Target="styles.xml"/></Relationships>';
+  var rootRels = HDR + '<Relationships xmlns="' + PKG + '">' +
+    '<Relationship Id="rId1" Type="' + REL + '/officeDocument" Target="xl/workbook.xml"/></Relationships>';
+  var types = HDR + '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>' +
+    '<Default Extension="xml" ContentType="application/xml"/>' +
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>' +
+    '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>' +
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>';
+
+  return zipStore([
+    { name: "[Content_Types].xml", data: utf8Bytes(types) },
+    { name: "_rels/.rels", data: utf8Bytes(rootRels) },
+    { name: "xl/workbook.xml", data: utf8Bytes(wb) },
+    { name: "xl/_rels/workbook.xml.rels", data: utf8Bytes(wbRels) },
+    { name: "xl/styles.xml", data: utf8Bytes(styles) },
+    { name: "xl/worksheets/sheet1.xml", data: utf8Bytes(sheet) }
+  ]);
+}
+
+// ---- PDF: каждая страница — JPEG-картинка ----
+// pages: [{w, h, data: Uint8Array(JPEG)}], pw/ph — размер страницы в пунктах
+function buildPdf(pages, pw, ph) {
+  var chunks = [], offs = [], len = 0, i;
+  function push(x) {
+    var b = (typeof x === "string") ? asciiBytes(x) : x;
+    chunks.push(b); len += b.length;
+  }
+  function begin(id) { offs[id] = len; push(id + " 0 obj\n"); }
+  function end() { push("endobj\n"); }
+  var total = 2 + pages.length * 3, kids = [];
+  for (i = 0; i < pages.length; i++) kids.push((3 + i * 3) + " 0 R");
+  push(new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2D, 0x31, 0x2E, 0x34, 0x0A, 0x25, 0xE2, 0xE3, 0xCF, 0xD3, 0x0A]));
+  begin(1); push("<< /Type /Catalog /Pages 2 0 R >>\n"); end();
+  begin(2); push("<< /Type /Pages /Kids [" + kids.join(" ") + "] /Count " + pages.length + " >>\n"); end();
+  for (i = 0; i < pages.length; i++) {
+    var pid = 3 + i * 3, cid = pid + 1, iid = pid + 2, p = pages[i];
+    begin(pid);
+    push("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 " + pw + " " + ph + "] /Resources << /XObject << /Im0 " + iid + " 0 R >> >> /Contents " + cid + " 0 R >>\n");
+    end();
+    var content = "q " + pw + " 0 0 " + ph + " 0 0 cm /Im0 Do Q\n";
+    begin(cid);
+    push("<< /Length " + content.length + " >>\nstream\n" + content + "endstream\n");
+    end();
+    begin(iid);
+    push("<< /Type /XObject /Subtype /Image /Width " + p.w + " /Height " + p.h + " /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length " + p.data.length + " >>\nstream\n");
+    push(p.data);
+    push("\nendstream\n");
+    end();
+  }
+  var xrefPos = len, xr = "xref\n0 " + (total + 1) + "\n0000000000 65535 f \n";
+  function pad10(n) { var t = String(n); while (t.length < 10) t = "0" + t; return t; }
+  for (i = 1; i <= total; i++) xr += pad10(offs[i]) + " 00000 n \n";
+  push(xr + "trailer\n<< /Size " + (total + 1) + " /Root 1 0 R >>\nstartxref\n" + xrefPos + "\n%%EOF\n");
+  return concatBytes(chunks);
+}
+// END-CORE
+</script>
+
+<!-- ===== Приложение ===== -->
+<script>
+(function () {
+  var STORE_KEY = "srok_godnosti_records_v1";
+  var records = [];
+  var bcCache = {};
+
+  function $(id) { return document.getElementById(id); }
+
+  // Разбор yyyy-mm-dd в локальную дату (без сдвигов часового пояса)
+  function parseISO(s) {
+    if (!s) return null;
+    var p = s.split("-");
+    if (p.length !== 3) return null;
+    var y = +p[0], m = +p[1], d = +p[2];
+    if (!y || !m || !d) return null;
+    var dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function toISO(dt) {
+    return dt.getFullYear() + "-" + pad(dt.getMonth() + 1) + "-" + pad(dt.getDate());
+  }
+  function fmt(dt) {
+    return pad(dt.getDate()) + "." + pad(dt.getMonth() + 1) + "." + dt.getFullYear();
+  }
+  // Прибавить месяцы; если в конечном месяце нет такого дня — берётся последний день месяца
+  function addMonths(dt, months) {
+    var y = dt.getFullYear();
+    var m = dt.getMonth() + months;
+    var d = dt.getDate();
+    var target = new Date(y, m, 1);
+    var lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
+    return new Date(target.getFullYear(), target.getMonth(), Math.min(d, lastDay));
+  }
+  function today() {
+    var n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+  }
+  function daysBetween(a, b) {
+    return Math.round((b.getTime() - a.getTime()) / 86400000);
+  }
+  function readMonths(v) {
+    if (v === "" || v === null) return null;
+    var n = Number(v);
+    if (!isFinite(n) || n < 0 || n > 1200 || Math.floor(n) !== n) return null;
+    return n;
+  }
+  // Количество (шт.): пусто — допустимо; иначе целое число 0…999999
+  function readQty(v) {
+    v = String(v === null || v === undefined ? "" : v).trim();
+    if (v === "") return { ok: true, val: null };
+    var n = Number(v);
+    if (!isFinite(n) || n < 0 || n > 999999 || Math.floor(n) !== n) return { ok: false, val: null };
+    return { ok: true, val: n };
+  }
+  function plural(n, one, few, many) {
+    var a = Math.abs(n) % 100, b = a % 10;
+    if (a > 10 && a < 20) return many;
+    if (b > 1 && b < 5) return few;
+    if (b === 1) return one;
+    return many;
+  }
+  // Красным отмечаются сроки: осталось 60 дней и меньше (включая просроченные)
+  function statusOf(endDt) {
+    var left = daysBetween(today(), endDt);
+    var crit = left <= 60, text;
+    if (left < 0) {
+      var k = -left;
+      text = "Просрочен на " + k + " " + plural(k, "день", "дня", "дней");
+    } else if (left === 0) {
+      text = "Истекает сегодня";
+    } else {
+      text = "Осталось " + left + " " + plural(left, "день", "дня", "дней");
+    }
+    return { cls: crit ? "st-bad" : "st-ok", text: text, crit: crit, left: left };
+  }
+  function statusPlain(endDt) { return statusOf(endDt).text; }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  // ---------- Диалоги ----------
+  var stack = [];
+
+  function openOverlay(html, onCancel) {
+    var ov = document.createElement("div");
+    ov.className = "overlay";
+    ov.style.zIndex = String(1000 + stack.length);
+    var box = document.createElement("div");
+    box.className = "modal";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    if (html) box.innerHTML = html;
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    var h = {
+      ov: ov, box: box, onCancel: onCancel || null, closed: false,
+      close: function () {
+        if (h.closed) return;
+        h.closed = true;
+        var ix = stack.indexOf(h);
+        if (ix >= 0) stack.splice(ix, 1);
+        if (ov.parentNode) ov.parentNode.removeChild(ov);
+      }
+    };
+    ov.addEventListener("click", function (e) {
+      if (e.target === ov && h.onCancel) h.onCancel();
+    });
+    stack.push(h);
+    return h;
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && stack.length) {
+      var top = stack[stack.length - 1];
+      if (top.onCancel) top.onCancel();
+    }
+  });
+
+  // Вопрос с кнопками. Возвращает Promise со значением выбранной кнопки (null — закрыто без выбора).
+  function ask(text, buttons, focusIdx) {
+    return new Promise(function (resolve) {
+      var h = openOverlay("", function () { h.close(); resolve(null); });
+      var p = document.createElement("p");
+      p.className = "mtext";
+      p.textContent = text;
+      h.box.appendChild(p);
+      var bar = document.createElement("div");
+      bar.className = "mbtns";
+      var els = [];
+      buttons.forEach(function (b) {
+        var btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = b.cls || "";
+        btn.textContent = b.label;
+        btn.addEventListener("click", function () { h.close(); resolve(b.value); });
+        bar.appendChild(btn);
+        els.push(btn);
+      });
+      h.box.appendChild(bar);
+      var fi = (typeof focusIdx === "number") ? focusIdx : 0;
+      if (els[fi]) els[fi].focus();
+    });
+  }
+
+  // ---------- Штрихкод: изображение ----------
+  function barcodeCanvas(code) {
+    var mods = eanModules(code), s = 3, qz = 10, n = code.length;
+    var barH = 84, W = (mods.length + qz * 2) * s, H = barH + 30;
+    var c = document.createElement("canvas");
+    c.width = W; c.height = H;
+    var g = c.getContext("2d");
+    g.fillStyle = "#ffffff";
+    g.fillRect(0, 0, W, H);
+    g.fillStyle = "#000000";
+    var i;
+    for (i = 0; i < mods.length; i++) {
+      if (mods.charAt(i) === "1") g.fillRect((qz + i) * s, 6, s, barH);
+    }
+    g.font = "bold 16px 'Courier New', monospace";
+    g.textAlign = "center";
+    g.textBaseline = "alphabetic";
+    var half = (n === 13) ? 6 : 4, off = (n === 13) ? 1 : 0;
+    var gw = half * 7 * s, ty = barH + 6 + 17;
+    var lx = (qz + 3) * s, rx = (qz + 3 + half * 7 + 5) * s;
+    function group(str, x0) {
+      for (var j = 0; j < str.length; j++) g.fillText(str.charAt(j), x0 + (j + 0.5) * gw / str.length, ty);
+    }
+    if (n === 13) g.fillText(code.charAt(0), (qz * s) / 2, ty);
+    group(code.substr(off, half), lx);
+    group(code.substr(off + half, half), rx);
+    return c;
+  }
+
+  function drawBarcode(code) { return barcodeCanvas(code).toDataURL("image/png"); }
+
+  function barcodeImg(code) {
+    if (bcCache[code] === undefined) {
+      var u = "";
+      try { u = drawBarcode(code); } catch (e) { u = ""; }
+      bcCache[code] = u;
+    }
+    return bcCache[code];
+  }
+
+  function updatePreview(input, box) {
+    var code = findEan(input.value);
+    var u = code ? barcodeImg(code) : "";
+    if (u) {
+      box.innerHTML = '<img class="bc" alt="Штрихкод ' + code + '" src="' + u + '">';
+      box.classList.add("on");
+    } else {
+      box.innerHTML = "";
+      box.classList.remove("on");
+    }
+  }
+
+  // Вписать номер EAN в поле примечания (заменяет прежний номер, если он был)
+  function applyEan(input, code) {
+    var txt = "EAN: " + code, v = input.value;
+    if (EAN_RE.test(v)) {
+      v = v.replace(EAN_RE, txt);
+    } else {
+      v = (v.trim() ? v.trim() + " " : "") + txt;
+    }
+    input.value = v;
+    var ev;
+    try { ev = new Event("input", { bubbles: true }); }
+    catch (e) { ev = document.createEvent("Event"); ev.initEvent("input", true, true); }
+    input.dispatchEvent(ev);
+  }
+
+  // ---------- Сканер ----------
+  function openScanner(onDone) {
+    var html =
+      '<h2>Сканирование штрихкода</h2>' +
+      '<div class="vwrap"><video playsinline muted autoplay></video><div class="aim"></div></div>' +
+      '<div class="scanstatus" id="scStatus">Запуск камеры…</div>' +
+      '<label for="scManual">Или введите номер вручную (8 или 13 цифр)</label>' +
+      '<div class="ig"><input type="text" id="scManual" inputmode="numeric" maxlength="13" placeholder="4600000000000">' +
+      '<button type="button" id="scAdd">Добавить</button></div>' +
+      '<div class="scanstatus err" id="scErr"></div>' +
+      '<div class="mbtns"><button type="button" class="secondary" id="scClose">Закрыть</button></div>';
+
+    var closed = false, stream = null, timer = null, busy = false, det = null, counts = {};
+    var h = openOverlay(html, function () { shutdown(); });
+    var video = h.box.querySelector("video");
+    var statusEl = h.box.querySelector("#scStatus");
+    var errEl = h.box.querySelector("#scErr");
+    var manual = h.box.querySelector("#scManual");
+    video.muted = true;
+    video.setAttribute("playsinline", "");
+
+    function setStatus(t, isErr) {
+      statusEl.textContent = t;
+      statusEl.className = "scanstatus" + (isErr ? " err" : "");
+    }
+    function stop() {
+      closed = true;
+      if (timer) { clearInterval(timer); timer = null; }
+      if (stream) {
+        stream.getTracks().forEach(function (t) { try { t.stop(); } catch (e) {} });
+        stream = null;
+      }
+    }
+    function shutdown() { stop(); h.close(); }
+    function finish(code) {
+      if (closed) return;
+      shutdown();
+      try { if (navigator.vibrate) navigator.vibrate(60); } catch (e) {}
+      onDone(code);
+    }
+
+    h.box.querySelector("#scClose").addEventListener("click", shutdown);
+    function manualAdd() {
+      var code = normalizeScanned(manual.value);
+      if (!code) {
+        errEl.textContent = "Номер не похож на EAN: проверьте цифры (контрольная цифра не сходится).";
+        return;
+      }
+      finish(code);
+    }
+    h.box.querySelector("#scAdd").addEventListener("click", manualAdd);
+    manual.addEventListener("keydown", function (e) { if (e.key === "Enter") manualAdd(); });
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setStatus("Камера недоступна. Откройте страницу по https-адресу (например, на GitHub Pages), а не как локальный файл. Номер можно ввести вручную.", true);
+      return;
+    }
+
+    try {
+      if (window.BarcodeDetector) det = new window.BarcodeDetector({ formats: ["ean_13", "ean_8", "upc_a"] });
+    } catch (e) { det = null; }
+
+    var canvas = document.createElement("canvas");
+    var ctx = null;
+    try { ctx = canvas.getContext("2d", { willReadFrequently: true }); } catch (e) { ctx = canvas.getContext("2d"); }
+
+    function vote(code) {
+      counts[code] = (counts[code] || 0) + 1;
+      if (counts[code] >= 2) finish(code);
+    }
+
+    function tick() {
+      if (closed || busy || !video.videoWidth || video.readyState < 2) return;
+      busy = true;
+      if (det) {
+        det.detect(video).then(function (res) {
+          busy = false;
+          if (closed) return;
+          for (var i = 0; i < res.length; i++) {
+            var c = normalizeScanned(res[i].rawValue);
+            if (c) { finish(c); return; }
+          }
+        }).catch(function () { busy = false; det = null; }); // детектор не работает — переходим на встроенный
+        return;
+      }
+      try {
+        var vw = video.videoWidth, vh = video.videoHeight;
+        var sc = Math.min(1, 1280 / vw);
+        var w = Math.max(1, Math.round(vw * sc)), hh = Math.max(1, Math.round(vh * sc));
+        if (canvas.width !== w) canvas.width = w;
+        if (canvas.height !== hh) canvas.height = hh;
+        ctx.drawImage(video, 0, 0, w, hh);
+        var d = ctx.getImageData(0, 0, w, hh).data;
+        var lum = new Uint8Array(w * hh), i, j;
+        for (i = 0, j = 0; i < lum.length; i++, j += 4) {
+          lum[i] = (d[j] * 77 + d[j + 1] * 150 + d[j + 2] * 29) >> 8;
+        }
+        var code = scanFrame(lum, w, hh);
+        busy = false;
+        if (code) vote(code);
+      } catch (e) { busy = false; }
+    }
+
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: false
+    }).then(function (s) {
+      if (closed) { s.getTracks().forEach(function (t) { t.stop(); }); return; }
+      stream = s;
+      video.srcObject = s;
+      try {
+        var tr = s.getVideoTracks()[0];
+        if (tr && tr.applyConstraints) tr.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(function () {});
+      } catch (e) {}
+      var pr = video.play();
+      if (pr && pr.catch) pr.catch(function () {});
+      setStatus("Наведите камеру на штрихкод, держите ровно, на расстоянии 15–25 см. Код считается сам.");
+      timer = setInterval(tick, 160);
+    }).catch(function (e) {
+      var name = e && e.name;
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        setStatus("Нет доступа к камере. Разрешите камеру для этого сайта в настройках браузера и откройте сканер снова. Номер можно ввести вручную.", true);
+      } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+        setStatus("Камера не найдена. Номер можно ввести вручную.", true);
+      } else {
+        setStatus("Не удалось запустить камеру. Номер можно ввести вручную.", true);
+      }
+    });
+  }
+
+  // ---------- Расчёты ----------
+  function calcQuick() {
+    var d = parseISO($("qDate").value);
+    var m = readMonths($("qMonths").value);
+    var info = $("qInfo");
+    if (!d || m === null) {
+      $("qEnd").value = "";
+      info.textContent = "";
+      return;
+    }
+    var end = addMonths(d, m);
+    $("qEnd").value = fmt(end);
+    info.textContent = statusPlain(end);
+  }
+  function calcRecordForm() {
+    var d = parseISO($("rDate").value);
+    var m = readMonths($("rMonths").value);
+    $("rEnd").value = (d && m !== null) ? fmt(addMonths(d, m)) : "";
+  }
+  function calcTotalForm() {
+    var t = parseNum($("rTara").value), q = readQty($("rQty").value);
+    $("rTotal").value = (t !== null && t === t && q.ok && q.val !== null) ? fmtNum(totalVol(t, q.val)) : "";
+  }
+
+  // Записи, сохранённые раньше (без тары), приводятся к текущему виду
+  function normRec(r) {
+    var t = (typeof r.tara === "number" && isFinite(r.tara) && r.tara >= 0) ? r.tara : null;
+    var q = (typeof r.qty === "number" && isFinite(r.qty) && r.qty >= 0 && r.qty <= 999999 && Math.floor(r.qty) === r.qty) ? r.qty : null;
+    return { id: r.id, note: String(r.note || ""), made: r.made, months: r.months, qty: q, tara: t, dept: String(r.dept || "").replace(/\s+/g, " ").trim().slice(0, 60) };
+  }
+
+  // Тара: необязательное число (допускается запятая); возвращает {ok, val}
+  function readTara(v) {
+    var t = parseNum(v);
+    if (t !== null && t !== t) return { ok: false, val: null };
+    return { ok: true, val: t === null ? null : round6(t) };
+  }
+  var TARA_ERR = "Тара — число, например 0,5 (не больше 1 000 000), или оставьте поле пустым.";
+
+  // ---------- Хранилище ----------
+  function newId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function save() {
+    records.forEach(function (r) { if (!r.id) r.id = newId(); });
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(records)); } catch (e) {}
+    syncRecords().then(runCheck);
+  }
+
+  // ---------- Уведомления о сроках ----------
+  var WARN_DAYS = 40;                     // напоминать, когда осталось 40 дней и меньше
+  var DB_NAME = "srok-godnosti", DB_STORE = "kv";
+
+  // Service worker не видит localStorage, поэтому копия записей лежит в IndexedDB
+  function openDb() {
+    return new Promise(function (resolve, reject) {
+      var q = indexedDB.open(DB_NAME, 1);
+      q.onupgradeneeded = function () { q.result.createObjectStore(DB_STORE); };
+      q.onsuccess = function () { resolve(q.result); };
+      q.onerror = function () { reject(q.error); };
+    });
+  }
+  function syncRecords() {
+    var copy = records.map(function (r) {
+      return { id: r.id, note: r.note, made: r.made, months: r.months };
+    });
+    return openDb().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction(DB_STORE, "readwrite");
+        tx.objectStore(DB_STORE).put(copy, "records");
+        tx.oncomplete = function () { resolve(); };
+        tx.onerror = function () { reject(tx.error); };
+      });
+    }).catch(function () {});
+  }
+  function notifSupported() {
+    return "Notification" in window && "serviceWorker" in navigator;
+  }
+  // Просим service worker проверить сроки и показать уведомления (раз в 3 часа на позицию)
+  function runCheck() {
+    if (!notifSupported() || Notification.permission !== "granted") return;
+    navigator.serviceWorker.ready.then(function (reg) {
+      if (reg.active) reg.active.postMessage({ type: "check" });
+    }).catch(function () {});
+  }
+  // Фоновая проверка на Android (установленное приложение в Chrome), как можно чаще (Chrome сам ограничивает частоту)
+  function registerBackground() {
+    if (!notifSupported() || Notification.permission !== "granted") return;
+    navigator.serviceWorker.ready.then(function (reg) {
+      if (reg.periodicSync) {
+        return reg.periodicSync.register("check-expiry", { minInterval: 3 * 3600 * 1000 });
+      }
+    }).catch(function () {});
+  }
+  function enableNotifications() {
+    if (!notifSupported()) return;
+    var done = function () { renderNotifBar(); registerBackground(); runCheck(); };
+    try {
+      var p = Notification.requestPermission(done);
+      if (p && p.then) p.then(done);
+    } catch (e) { done(); }
+  }
+
+  function expiringItems() {
+    var out = [];
+    records.forEach(function (r, i) {
+      var made = parseISO(r.made);
+      if (!made) return;
+      var end = addMonths(made, r.months), left = daysBetween(today(), end);
+      if (left <= WARN_DAYS) out.push({ i: i, r: r, end: end, left: left });
+    });
+    out.sort(function (a, b) { return a.left - b.left; });
+    return out;
+  }
+
+  function renderExpiring() {
+    var items = expiringItems();
+    $("expCard").hidden = !items.length;
+    $("expCount").textContent = items.length ? "(" + items.length + ")" : "";
+    var html = "";
+    items.forEach(function (it) {
+      var st = statusOf(it.end);
+      html += '<div class="hit"><div class="hit-main"><div class="hit-note">№' + (it.i + 1) + " · " +
+        escapeHtml(it.r.note || "—") + '</div><div class="hit-meta">' + (it.r.dept ? "Отдел: " + escapeHtml(it.r.dept) + " · " : "") + "Годен до " + fmt(it.end) +
+        ' · <span class="st-bad">' + st.text + '</span></div></div>' +
+        '<button type="button" class="secondary small" data-xedit="' + it.i + '">Изменить</button></div>';
+    });
+    $("expList").innerHTML = html;
+    renderNotifBar();
+  }
+
+  function renderNotifBar() {
+    var bar = $("notifBar"), txt = $("notifText"), btn = $("notifBtn");
+    var perm = notifSupported() ? Notification.permission : "unsupported";
+    bar.hidden = (perm === "granted");
+    btn.hidden = (perm !== "default");
+    if (perm === "default") {
+      txt.textContent = "Включите уведомления, чтобы телефон напоминал о подходящих сроках годности (за 40 дней, затем каждые 3 часа).";
+    } else if (perm === "denied") {
+      txt.textContent = "Уведомления заблокированы. Разрешите их для этого сайта в настройках браузера, чтобы получать напоминания о сроках.";
+    } else if (perm === "unsupported") {
+      txt.textContent = "Уведомления в этом браузере недоступны. На Android откройте страницу в Chrome и установите приложение через меню.";
+    }
+  }
+  function load() {
+    try {
+      var raw = localStorage.getItem(STORE_KEY);
+      if (raw) {
+        var arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          records = arr.filter(function (r) { return r && typeof r === "object"; }).map(normRec);
+        }
+      }
+    } catch (e) { records = []; }
+  }
+
+  // ---------- Таблица ----------
+  // ---------- Отделы ----------
+  var deptSel = "__all"; // "__all" — все отделы, "__none" — без отдела, иначе название отдела
+  function deptNames() {
+    var seen = {}, out = [];
+    records.forEach(function (r) {
+      var d = r.dept || "", k = normText(d);
+      if (d && !seen[k]) { seen[k] = 1; out.push(d); }
+    });
+    out.sort(function (a, b) { return a.localeCompare(b, "ru"); });
+    return out;
+  }
+  // Название отдела: если такой уже есть (без учёта регистра) — берётся его написание
+  function canonDept(v) {
+    v = String(v || "").replace(/\s+/g, " ").trim().slice(0, 60);
+    if (!v) return "";
+    var k = normText(v), names = deptNames();
+    for (var i = 0; i < names.length; i++) if (normText(names[i]) === k) return names[i];
+    return v;
+  }
+  function refreshDepts() {
+    var ds = deptNames(), opts = [["__all", "Все отделы"]];
+    ds.forEach(function (d) { opts.push([d, d]); });
+    if (ds.length && records.some(function (r) { return !r.dept; })) opts.push(["__none", "Без отдела"]);
+    if (!opts.some(function (o) { return o[0] === deptSel; })) deptSel = "__all";
+    $("deptFilter").innerHTML = opts.map(function (o) {
+      return '<option value="' + escapeHtml(o[0]) + '">' + escapeHtml(o[1]) + "</option>";
+    }).join("");
+    $("deptFilter").value = deptSel;
+    $("deptWrap").hidden = !ds.length;
+    $("deptList").innerHTML = ds.map(function (d) { return '<option value="' + escapeHtml(d) + '">'; }).join("");
+  }
+
+  // Индексы записей выбранного отдела (или всех) в порядке показа; для «всех» — по отделам
+  function visibleOrder() {
+    var order = [], counts = {};
+    records.forEach(function (r, i) {
+      var d = r.dept || "";
+      if (deptSel === "__all" || (deptSel === "__none" ? !d : d === deptSel)) order.push(i);
+      counts[d] = (counts[d] || 0) + 1;
+    });
+    var grouped = deptSel === "__all" && deptNames().length > 0;
+    if (grouped) { // по отделам (А–Я), позиции без отдела в конце; внутри отдела порядок записей сохраняется
+      order.sort(function (a, b) {
+        var da = records[a].dept || "", db = records[b].dept || "";
+        if (da === db) return a - b;
+        if (!da) return 1;
+        if (!db) return -1;
+        return da.localeCompare(db, "ru");
+      });
+    }
+    return { order: order, counts: counts, grouped: grouped };
+  }
+
+  function render() {
+    var tbody = $("tbody");
+    tbody.innerHTML = "";
+    refreshDepts();
+    var vo = visibleOrder(), order = vo.order, counts = vo.counts, grouped = vo.grouped;
+    var lastGrp = null;
+    if (!records.length) {
+      $("tbl").style.display = "none";
+      $("emptyMsg").style.display = "block";
+    } else {
+      $("tbl").style.display = "table";
+      $("emptyMsg").style.display = "none";
+      order.forEach(function (i) {
+        var r = records[i];
+        if (grouped && (r.dept || "") !== lastGrp) {
+          lastGrp = r.dept || "";
+          var gh = document.createElement("tr");
+          gh.className = "grp";
+          gh.innerHTML = '<td colspan="10">' + (lastGrp ? "Отдел: " + escapeHtml(lastGrp) : "Без отдела") +
+            " (" + counts[lastGrp] + ")</td>";
+          tbody.appendChild(gh);
+        }
+        var made = parseISO(r.made);
+        var end = made ? addMonths(made, r.months) : null;
+        var st = end ? statusOf(end) : { cls: "", text: "", crit: false };
+        var ean = findEan(r.note || "");
+        var img = ean ? barcodeImg(ean) : "";
+        var tot = totalVol(r.tara, r.qty);
+        var tr = document.createElement("tr");
+        tr.innerHTML =
+          '<td data-label="№">' + (i + 1) + "</td>" +
+          '<td data-label="Примечание"><div class="note">' + escapeHtml(r.note || "—") +
+            (img ? '<img class="bc" alt="Штрихкод ' + ean + '" src="' + img + '">' : "") + "</div></td>" +
+          '<td data-label="Количество">' + (r.qty === null || r.qty === undefined ? "—" : r.qty + " шт.") + "</td>" +
+          '<td data-label="Тара">' + fmtNum(r.tara) + "</td>" +
+          '<td data-label="Общий объём">' + fmtNum(tot) + "</td>" +
+          '<td data-label="Дата выпуска">' + (made ? fmt(made) : "—") + "</td>" +
+          '<td data-label="Срок (мес.)">' + r.months + "</td>" +
+          '<td data-label="Годен до"' + (st.crit ? ' class="st-bad"' : "") + ">" + (end ? fmt(end) : "—") + "</td>" +
+          '<td data-label="Статус" class="' + st.cls + '">' + st.text + "</td>" +
+          '<td class="acts"><div class="rowbtns">' +
+            '<button class="secondary small" data-edit="' + i + '">Изменить</button>' +
+            '<button class="danger small" data-del="' + i + '">Удалить</button>' +
+          "</div></td>";
+        tbody.appendChild(tr);
+      });
+    }
+    updateReport();
+    renderSearch();
+    renderExpiring();
+  }
+
+  // ---------- Поиск по примечаниям ----------
+  function setSMsg(text, cls) {
+    var el = $("sMsg");
+    el.textContent = text;
+    el.className = "msg" + (cls ? " " + cls : "");
+  }
+
+  function renderSearch() {
+    var raw = $("sQuery").value, q = raw.trim(), box = $("sRes");
+    $("sClear").hidden = !raw;
+    if (!q) { box.innerHTML = ""; setSMsg("", ""); return; }
+    var nq = normText(q), hits = [];
+    records.forEach(function (r, i) {
+      if (normText(r.note).indexOf(nq) >= 0) hits.push(i);
+    });
+    if (!hits.length) { box.innerHTML = ""; setSMsg("Ничего не найдено.", ""); return; }
+    setSMsg("Найдено: " + hits.length + " из " + records.length + ".", "ok");
+    var shown = hits.slice(0, 50), html = "";
+    shown.forEach(function (i) {
+      var r = records[i], made = parseISO(r.made);
+      var end = made ? addMonths(made, r.months) : null;
+      var st = end ? statusOf(end) : null, tot = totalVol(r.tara, r.qty), parts = [];
+      if (r.dept) parts.push("отдел " + r.dept);
+      if (end) parts.push("Годен до " + fmt(end));
+      if (r.tara != null) parts.push("тара " + fmtNum(r.tara));
+      if (r.qty != null) parts.push("кол-во " + r.qty + " шт.");
+      if (tot !== null) parts.push("общий объём " + fmtNum(tot));
+      html += '<div class="hit"><div class="hit-main"><div class="hit-note">№' + (i + 1) + " · " +
+        escapeHtml(r.note || "—") + '</div><div class="hit-meta">' + escapeHtml(parts.join(" · ")) +
+        (st ? ' · <span class="' + st.cls + '">' + st.text + "</span>" : "") +
+        '</div></div><button type="button" class="secondary small" data-sedit="' + i + '">Изменить</button></div>';
+    });
+    if (hits.length > shown.length) {
+      html += '<div class="hint">Показаны первые 50 из ' + hits.length + ". Уточните запрос.</div>";
+    }
+    box.innerHTML = html;
+  }
+
+  // Сканирование EAN для поиска: одна позиция — сразу открывается изменение
+  function searchByScan() {
+    openScanner(function (code) {
+      var idx = [];
+      records.forEach(function (r, i) { if (findEan(r.note) === code) idx.push(i); });
+      if (idx.length === 1) {
+        $("sQuery").value = "";
+        renderSearch();
+        setSMsg("Найден EAN " + code + ": позиция №" + (idx[0] + 1) + ".", "ok");
+        editRecord(idx[0]);
+      } else if (idx.length > 1) {
+        $("sQuery").value = code;
+        renderSearch();
+        setSMsg("EAN " + code + " есть в нескольких позициях (" + idx.length + "). Выберите нужную в списке.", "ok");
+      } else {
+        $("sQuery").value = "";
+        renderSearch();
+        setSMsg("EAN " + code + " в отчёте не найден.", "err");
+      }
+    });
+  }
+
+  // ---------- Изменение записи ----------
+  var CAM_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-2.5h6L17 8h3a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+
+  function editRecord(i) {
+    var r = records[i];
+    if (!r) return;
+    var h = openOverlay(
+      '<h2>Изменить запись №' + (i + 1) + '</h2>' +
+      '<label for="eNote">Примечание</label>' +
+      '<div class="ig"><input type="text" id="eNote" placeholder="Название, партия, место...">' +
+      '<button type="button" class="sq secondary" id="eScan" title="Сканировать штрихкод камерой" aria-label="Сканировать штрихкод камерой">' + CAM_SVG + '</button></div>' +
+      '<div class="bcprev" id="eBc"></div>' +
+      '<div class="field"><label for="eDept">Отдел (необязательно)</label>' +
+      '<input type="text" id="eDept" list="deptList" maxlength="60" autocomplete="off" placeholder="Выберите из списка или введите новый"></div>' +
+      '<div class="three field">' +
+      '<div><label for="eTara">Тара</label><input type="text" id="eTara" inputmode="decimal" autocomplete="off" placeholder="0,5"></div>' +
+      '<div><label for="eQty">Количество (шт.)</label><input type="number" id="eQty" min="0" max="999999" step="1" inputmode="numeric" placeholder="шт."></div>' +
+      '<div><label for="eTotal">Общий объём</label><input type="text" id="eTotal" readonly placeholder="—"></div></div>' +
+      '<div class="two field"><div><label for="eDate">Дата выпуска</label><input type="date" id="eDate"></div>' +
+      '<div><label for="eMonths">Срок годности (мес.)</label><input type="number" id="eMonths" min="0" max="1200" step="1"></div></div>' +
+      '<div class="field"><label for="eEnd">Годен до</label><input type="text" id="eEnd" readonly placeholder="—"></div>' +
+      '<div class="error" id="eErr"></div>' +
+      '<div class="mbtns"><button type="button" class="secondary" id="eCancel">Отмена</button>' +
+      '<button type="button" id="eSave">Сохранить</button></div>',
+      function () { h.close(); }
+    );
+    var note = h.box.querySelector("#eNote"), date = h.box.querySelector("#eDate");
+    var months = h.box.querySelector("#eMonths"), end = h.box.querySelector("#eEnd"), qty = h.box.querySelector("#eQty");
+    var err = h.box.querySelector("#eErr"), bc = h.box.querySelector("#eBc");
+    var tara = h.box.querySelector("#eTara"), total = h.box.querySelector("#eTotal");
+    var dept = h.box.querySelector("#eDept");
+    dept.value = r.dept || "";
+    tara.value = r.tara == null ? "" : fmtNum(r.tara);
+    note.value = r.note || "";
+    date.value = r.made || "";
+    months.value = String(r.months);
+    qty.value = (r.qty === null || r.qty === undefined) ? "" : String(r.qty);
+
+    function recalc() {
+      err.textContent = "";
+      var d = parseISO(date.value), m = readMonths(months.value);
+      end.value = (d && m !== null) ? fmt(addMonths(d, m)) : "";
+      var t = parseNum(tara.value), q = readQty(qty.value);
+      total.value = (t !== null && t === t && q.ok && q.val !== null) ? fmtNum(totalVol(t, q.val)) : "";
+    }
+    recalc();
+    updatePreview(note, bc);
+
+    note.addEventListener("input", function () { updatePreview(note, bc); });
+    date.addEventListener("input", recalc);
+    months.addEventListener("input", recalc);
+    tara.addEventListener("input", recalc);
+    qty.addEventListener("input", recalc);
+    h.box.querySelector("#eScan").addEventListener("click", function () {
+      openScanner(function (code) { applyEan(note, code); });
+    });
+    h.box.querySelector("#eCancel").addEventListener("click", function () { h.close(); });
+    h.box.querySelector("#eSave").addEventListener("click", function () {
+      var d = parseISO(date.value), m = readMonths(months.value);
+      if (!d) { err.textContent = "Укажите корректную дату выпуска."; return; }
+      if (m === null) { err.textContent = "Срок годности — целое число месяцев (от 0 до 1200)."; return; }
+      var q = readQty(qty.value);
+      if (!q.ok) { err.textContent = "Количество — целое число штук (от 0 до 999999) или оставьте поле пустым."; return; }
+      var ta = readTara(tara.value);
+      if (!ta.ok) { err.textContent = TARA_ERR; return; }
+      records[i] = { id: r.id, note: note.value.trim(), made: toISO(d), months: m, qty: q.val, tara: ta.val, dept: canonDept(dept.value) };
+      save();
+      h.close();
+      render();
+    });
+    note.focus();
+  }
+
+  // ---------- Удаление ----------
+  function deleteRecord(i) {
+    var r = records[i];
+    if (!r) return;
+    var label = r.note ? " («" + r.note + "»)" : "";
+    ask("Удалить запись №" + (i + 1) + label + "?", [
+      { label: "Нет", value: false, cls: "secondary" },
+      { label: "Да", value: true, cls: "dangersolid" }
+    ], 0).then(function (v) {
+      if (v === true) {
+        records.splice(i, 1);
+        save();
+        render();
+      }
+    });
+  }
+
+  // ---------- Отчёт ----------
+  function buildReportLines() {
+    var now = new Date(), L = [];
+    function add(t, red) { L.push({ t: t, red: !!red }); }
+    add("ОТЧЁТ О СРОКАХ ГОДНОСТИ");
+    add("Дата формирования: " + fmt(now) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()));
+    var vo = visibleOrder(), lastGrp = null;
+    if (deptSel === "__none") add("Отдел: без отдела");
+    else if (deptSel !== "__all") add("Отдел: " + deptSel);
+    else add("Отдел: все");
+    add("Всего записей: " + vo.order.length);
+    add("Красным отмечены сроки: осталось 60 дней и меньше (и просроченные)");
+    add("========================================");
+    if (!vo.order.length) add("Записей нет.");
+    vo.order.forEach(function (ri, i) {
+      var r = records[ri];
+      if (vo.grouped && (r.dept || "") !== lastGrp) {
+        lastGrp = r.dept || "";
+        add("");
+        add("=== " + (lastGrp ? "ОТДЕЛ «" + lastGrp + "»" : "БЕЗ ОТДЕЛА") + " ===");
+      }
+      var made = parseISO(r.made);
+      var end = made ? addMonths(made, r.months) : null;
+      var st = end ? statusOf(end) : null;
+      var crit = !!(st && st.crit);
+      add("");
+      add((i + 1) + ". Примечание: " + (r.note || "—"));
+      if (r.dept) add("   Отдел: " + r.dept);
+      add("   Дата выпуска: " + (made ? fmt(made) : "—"));
+      add("   Срок годности: " + r.months + " мес.");
+      if (r.qty !== null && r.qty !== undefined) add("   Количество: " + r.qty + " шт.");
+      if (r.tara != null) add("   Тара: " + fmtNum(r.tara));
+      var tot = totalVol(r.tara, r.qty);
+      if (tot !== null) add("   Общий объём: " + fmtNum(tot));
+      add("   Годен до: " + (end ? fmt(end) : "—"), crit);
+      add("   Статус: " + (st ? st.text : "—"), crit);
+    });
+    return L;
+  }
+
+  function buildReport() {
+    return buildReportLines().map(function (l) { return l.t; }).join("\r\n");
+  }
+
+  function updateReport() {
+    var on = $("reportChk").checked;
+    var view = $("reportText");
+    view.classList.toggle("on", on);
+    var off = !on || !records.length;
+    $("exportBtn").disabled = off;
+    $("xlsxBtn").disabled = off;
+    $("pdfBtn").disabled = off;
+    if (on) {
+      view.innerHTML = buildReportLines().map(function (l) {
+        var t = escapeHtml(l.t);
+        return l.red ? '<span class="red">' + t + "</span>" : t;
+      }).join("\n");
+    }
+  }
+
+  function reportBaseName() {
+    var n = new Date();
+    var sfx = "";
+    if (deptSel === "__none") sfx = "_bez_otdela";
+    else if (deptSel !== "__all") sfx = "_" + deptSel.replace(/[\\\/:*?"<>|\s]+/g, "_");
+    return "otchet_sroki_godnosti_" + n.getFullYear() + pad(n.getMonth() + 1) + pad(n.getDate()) + sfx;
+  }
+
+  function downloadBlob(blob, name) {
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+  }
+
+  function exportTxt() {
+    // BOM, чтобы кириллица открывалась корректно в Блокноте
+    downloadBlob(new Blob(["﻿" + buildReport()], { type: "text/plain;charset=utf-8" }), reportBaseName() + ".txt");
+  }
+
+  // Данные записей для Excel и PDF
+  function serialOf(dt) {
+    return Math.round((Date.UTC(dt.getFullYear(), dt.getMonth(), dt.getDate()) - Date.UTC(1899, 11, 30)) / 86400000);
+  }
+  function reportRows() {
+    return visibleOrder().order.map(function (ri, i) {
+      var r = records[ri];
+      var made = parseISO(r.made);
+      var end = made ? addMonths(made, r.months) : null;
+      var st = end ? statusOf(end) : { text: "", crit: false, left: 0 };
+      return {
+        n: i + 1,
+        note: r.note || "",
+        dept: r.dept || "",
+        ean: findEan(r.note || ""),
+        qty: (r.qty === null || r.qty === undefined) ? null : r.qty,
+        tara: r.tara == null ? null : r.tara,
+        total: totalVol(r.tara, r.qty),
+        months: r.months,
+        madeText: made ? fmt(made) : "—",
+        endText: end ? fmt(end) : "—",
+        madeSerial: made ? serialOf(made) : 0,
+        endSerial: end ? serialOf(end) : 0,
+        daysLeft: end ? st.left : 0,
+        status: st.text,
+        crit: !!st.crit
+      };
+    });
+  }
+
+  function exportXlsx() {
+    try {
+      var bytes = buildXlsx(reportRows());
+      downloadBlob(new Blob([bytes], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), reportBaseName() + ".xlsx");
+      setMsg("Файл Excel создан.", "ok");
+    } catch (e) {
+      setMsg("Не удалось создать файл Excel: " + e.message, "err");
+    }
+  }
+
+  // Перенос текста по ширине (слишком длинные слова режутся по символам)
+  function wrapLines(g, text, maxW) {
+    var out = [];
+    String(text).split(/\n/).forEach(function (para) {
+      var line = "";
+      para.split(/\s+/).forEach(function (w) {
+        var t = line ? line + " " + w : w;
+        if (g.measureText(t).width <= maxW) { line = t; return; }
+        if (line) { out.push(line); line = ""; }
+        while (g.measureText(w).width > maxW && w.length > 1) {
+          var k = w.length;
+          while (k > 1 && g.measureText(w.slice(0, k)).width > maxW) k--;
+          out.push(w.slice(0, k));
+          w = w.slice(k);
+        }
+        line = w;
+      });
+      out.push(line);
+    });
+    return out;
+  }
+
+  // Страницы A4 (200 dpi) рисуются на canvas шрифтами устройства, поэтому кириллица
+  // отображается без встроенных шрифтов.
+  function renderPdfPages(rows) {
+    var W = 1654, H = 2339, M = 100, PAD = 10, LH = 34;
+    var FONT = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+    var TEXT_F = "26px " + FONT, BOLD_F = "bold 26px " + FONT, HEAD_F = "bold 22px " + FONT;
+    var RED = "#c00000", INK = "#1f2933";
+    var cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    var g = cv.getContext("2d");
+    var colW = [50, 320, 130, 100, 130, 160, 110, 160, 294], colX = [], x = M, i, TW = 0;
+    for (i = 0; i < colW.length; i++) { colX.push(x); x += colW[i]; TW += colW[i]; }
+    var heads = ["№", "Примечание", "Кол-во", "Тара", "Общий объём", "Дата выпуска", "Срок (мес.)", "Годен до", "Статус"];
+
+    g.font = HEAD_F;
+    var headLines = heads.map(function (t, k) { return wrapLines(g, t, colW[k] - 2 * PAD); });
+    var maxHL = 1;
+    headLines.forEach(function (l) { if (l.length > maxHL) maxHL = l.length; });
+    var headH = maxHL * 28 + 24;
+
+    var laid = rows.map(function (r) {
+      g.font = TEXT_F;
+      var noteLines = wrapLines(g, (r.dept ? "Отдел: " + r.dept + "\n" : "") + (r.note || "—"), colW[1] - 2 * PAD);
+      g.font = BOLD_F;
+      var stLines = wrapLines(g, r.status || "—", colW[8] - 2 * PAD);
+      var bc = r.ean ? barcodeCanvas(r.ean) : null;
+      var bw = 300, bh = bc ? Math.round(bc.height * bw / bc.width) : 0;
+      var h = Math.max(noteLines.length * LH + (bc ? bh + 8 : 0), stLines.length * LH, LH) + 2 * PAD;
+      return { r: r, noteLines: noteLines, stLines: stLines, bc: bc, bw: bw, bh: bh, h: h };
+    });
+
+    var FIRST_Y = 290, maxY = H - M - 30;
+    var pages = [], pg = { rows: [] }, yy = FIRST_Y + headH;
+    laid.forEach(function (L) {
+      if (yy + L.h > maxY && pg.rows.length) { pages.push(pg); pg = { rows: [] }; yy = M + headH; }
+      pg.rows.push(L);
+      yy += L.h;
+    });
+    pages.push(pg);
+
+    var now = new Date(), out = [];
+    pages.forEach(function (p, pi) {
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      g.fillStyle = "#ffffff";
+      g.fillRect(0, 0, W, H);
+      g.textBaseline = "top";
+      g.textAlign = "left";
+      var y = M;
+      if (pi === 0) {
+        g.fillStyle = INK; g.font = "bold 46px " + FONT;
+        g.fillText("Отчёт о сроках годности" + (deptSel === "__all" ? "" : " — " + (deptSel === "__none" ? "без отдела" : deptSel)), M, y);
+        g.font = "26px " + FONT; g.fillStyle = "#52606d";
+        g.fillText("Дата формирования: " + fmt(now) + " " + pad(now.getHours()) + ":" + pad(now.getMinutes()), M, y + 66);
+        g.fillText("Всего записей: " + rows.length, M, y + 102);
+        g.fillStyle = RED;
+        g.fillText("Красным отмечены сроки: осталось 60 дней и меньше (и просроченные)", M, y + 138);
+        y = FIRST_Y;
+      }
+      g.fillStyle = "#dbe4f3";
+      g.fillRect(M, y, TW, headH);
+      g.fillStyle = INK; g.font = HEAD_F;
+      headLines.forEach(function (lines, k) {
+        lines.forEach(function (t, j) { g.fillText(t, colX[k] + PAD, y + 12 + j * 28); });
+      });
+      y += headH;
+      p.rows.forEach(function (L) {
+        var r = L.r;
+        g.font = TEXT_F; g.fillStyle = INK;
+        g.fillText(String(r.n), colX[0] + PAD, y + PAD);
+        L.noteLines.forEach(function (t, k) { g.fillText(t, colX[1] + PAD, y + PAD + k * LH); });
+        if (L.bc) g.drawImage(L.bc, colX[1] + PAD, y + PAD + L.noteLines.length * LH + 8, L.bw, L.bh);
+        g.fillText(r.qty === null ? "—" : r.qty + " шт.", colX[2] + PAD, y + PAD);
+        g.fillText(fmtNum(r.tara), colX[3] + PAD, y + PAD);
+        g.fillText(fmtNum(r.total), colX[4] + PAD, y + PAD);
+        g.fillText(r.madeText, colX[5] + PAD, y + PAD);
+        g.fillText(String(r.months), colX[6] + PAD, y + PAD);
+        g.font = r.crit ? BOLD_F : TEXT_F;
+        g.fillStyle = r.crit ? RED : INK;
+        g.fillText(r.endText, colX[7] + PAD, y + PAD);
+        L.stLines.forEach(function (t, k) { g.fillText(t, colX[8] + PAD, y + PAD + k * LH); });
+        g.strokeStyle = "#c8d0da"; g.lineWidth = 2;
+        g.beginPath(); g.moveTo(M, y + L.h); g.lineTo(M + TW, y + L.h); g.stroke();
+        y += L.h;
+      });
+      g.font = "22px " + FONT; g.fillStyle = "#7b8794"; g.textAlign = "right";
+      g.fillText("Стр. " + (pi + 1) + " из " + pages.length, M + TW, H - M + 10);
+      var b64 = cv.toDataURL("image/jpeg", 0.92).split(",")[1];
+      var bin = atob(b64), data = new Uint8Array(bin.length), k;
+      for (k = 0; k < bin.length; k++) data[k] = bin.charCodeAt(k);
+      out.push({ w: W, h: H, data: data });
+    });
+    return out;
+  }
+
+  function exportPdf() {
+    setMsg("Создаю PDF…", "");
+    setTimeout(function () {
+      try {
+        var pages = renderPdfPages(reportRows());
+        var bytes = buildPdf(pages, 595, 842);
+        downloadBlob(new Blob([bytes], { type: "application/pdf" }), reportBaseName() + ".pdf");
+        setMsg("PDF создан, страниц: " + pages.length + ".", "ok");
+      } catch (e) {
+        setMsg("Не удалось создать PDF: " + e.message, "err");
+      }
+    }, 30);
+  }
+
+  function setMsg(text, cls) {
+    var el = $("reportMsg");
+    el.textContent = text;
+    el.className = "msg" + (cls ? " " + cls : "");
+  }
+
+  // ---------- Импорт отчёта ----------
+  function sameRecord(a, b) {
+    var qa = (a.qty == null) ? null : a.qty, qb = (b.qty == null) ? null : b.qty;
+    var ta = (a.tara == null) ? null : a.tara, tb = (b.tara == null) ? null : b.tara;
+    return a.note === b.note && a.made === b.made && a.months === b.months && qa === qb && ta === tb && (a.dept || "") === (b.dept || "");
+  }
+
+  function applyImport(res, mode) {
+    var added = 0, dup = 0;
+    if (mode === "replace") records = [];
+    res.records.forEach(function (r) {
+      if (mode === "add" && records.some(function (x) { return sameRecord(x, r); })) { dup++; return; }
+      records.push(r);
+      added++;
+    });
+    save();
+    render();
+    var t = "Импортировано записей: " + added;
+    if (dup) t += ", пропущено повторов: " + dup;
+    if (res.bad) t += ", не распознано блоков: " + res.bad;
+    setMsg(t + ".", "ok");
+  }
+
+  function handleImport(text) {
+    var res = parseReport(text);
+    if (!res.records.length) {
+      var enc = text.indexOf("�") >= 0;
+      setMsg(enc
+        ? "Не удалось разобрать файл: похоже, он сохранён не в кодировке UTF-8."
+        : "В файле не найдено записей. Подходит txt-отчёт, сохранённый кнопкой «Экспорт в txt».", "err");
+      return;
+    }
+    if (!records.length) { applyImport(res, "add"); return; }
+    ask("В файле найдено записей: " + res.records.length + ". Что сделать?", [
+      { label: "Отмена", value: "cancel", cls: "secondary" },
+      { label: "Заменить текущие", value: "replace", cls: "secondary" },
+      { label: "Добавить к текущим", value: "add", cls: "" }
+    ], 2).then(function (v) {
+      if (v === "add" || v === "replace") applyImport(res, v);
+      else setMsg("Импорт отменён.", "");
+    });
+  }
+
+  // ---------- События ----------
+  $("qDate").addEventListener("input", calcQuick);
+  $("qMonths").addEventListener("input", calcQuick);
+  $("rDate").addEventListener("input", calcRecordForm);
+  $("rMonths").addEventListener("input", calcRecordForm);
+  $("rTara").addEventListener("input", calcTotalForm);
+  $("rQty").addEventListener("input", calcTotalForm);
+
+  $("sQuery").addEventListener("input", renderSearch);
+  $("sQuery").addEventListener("keydown", function (e) { if (e.key === "Enter") this.blur(); });
+  $("sClear").addEventListener("click", function () {
+    $("sQuery").value = "";
+    renderSearch();
+    $("sQuery").focus();
+  });
+  $("sRes").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-sedit]") : null;
+    if (b) editRecord(+b.getAttribute("data-sedit"));
+  });
+  $("expList").addEventListener("click", function (e) {
+    var b = e.target.closest ? e.target.closest("button[data-xedit]") : null;
+    if (b) editRecord(+b.getAttribute("data-xedit"));
+  });
+  $("notifBtn").addEventListener("click", enableNotifications);
+  $("deptFilter").addEventListener("change", function () { deptSel = this.value; render(); });
+  $("sScan").addEventListener("click", searchByScan);
+  $("rNote").addEventListener("input", function () { updatePreview($("rNote"), $("rBc")); });
+  // Последний введённый/выбранный отдел запоминается и подставляется при следующем открытии
+  var LAST_DEPT_KEY = "srok_godnosti_last_dept";
+  function saveLastDept() {
+    try { localStorage.setItem(LAST_DEPT_KEY, $("rDept").value.trim()); } catch (e) {}
+  }
+  $("rDept").addEventListener("input", saveLastDept);
+  $("rDept").addEventListener("change", saveLastDept);
+  try { $("rDept").value = localStorage.getItem(LAST_DEPT_KEY) || ""; } catch (e) {}
+  $("rScan").addEventListener("click", function () {
+    openScanner(function (code) { applyEan($("rNote"), code); });
+  });
+
+  $("addBtn").addEventListener("click", function () {
+    var err = $("rError");
+    var d = parseISO($("rDate").value);
+    var m = readMonths($("rMonths").value);
+    if (!d) { err.textContent = "Укажите корректную дату выпуска."; return; }
+    if (m === null) { err.textContent = "Срок годности — целое число месяцев (от 0 до 1200)."; return; }
+    var q = readQty($("rQty").value);
+    if (!q.ok) { err.textContent = "Количество — целое число штук (от 0 до 999999) или оставьте поле пустым."; return; }
+    var ta = readTara($("rTara").value);
+    if (!ta.ok) { err.textContent = TARA_ERR; return; }
+    err.textContent = "";
+    records.push({
+      note: $("rNote").value.trim(),
+      made: toISO(d),
+      months: m,
+      qty: q.val,
+      tara: ta.val,
+      dept: canonDept($("rDept").value)
+    });
+    save();
+    saveLastDept();
+    $("rNote").value = "";
+    $("rDate").value = "";
+    $("rMonths").value = "";
+    $("rQty").value = "";
+    $("rTara").value = "";
+    $("rTotal").value = "";
+    $("rEnd").value = "";
+    updatePreview($("rNote"), $("rBc"));
+    render();
+    $("rNote").focus();
+  });
+
+  $("tbody").addEventListener("click", function (e) {
+    var t = e.target;
+    var del = t.closest ? t.closest("button[data-del]") : null;
+    if (del) { deleteRecord(+del.getAttribute("data-del")); return; }
+    var ed = t.closest ? t.closest("button[data-edit]") : null;
+    if (ed) { editRecord(+ed.getAttribute("data-edit")); }
+  });
+
+  $("clearBtn").addEventListener("click", function () {
+    if (!records.length) return;
+    ask("Удалить все записи (" + records.length + ")?", [
+      { label: "Нет", value: false, cls: "secondary" },
+      { label: "Да", value: true, cls: "dangersolid" }
+    ], 0).then(function (v) {
+      if (v === true) {
+        records = [];
+        save();
+        render();
+      }
+    });
+  });
+
+  $("reportChk").addEventListener("change", updateReport);
+  $("exportBtn").addEventListener("click", exportTxt);
+  $("xlsxBtn").addEventListener("click", exportXlsx);
+  $("pdfBtn").addEventListener("click", exportPdf);
+
+  $("importBtn").addEventListener("click", function () {
+    var f = $("importFile");
+    f.value = "";
+    f.click();
+  });
+  $("importFile").addEventListener("change", function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    var rd = new FileReader();
+    rd.onload = function () { handleImport(String(rd.result || "")); };
+    rd.onerror = function () { setMsg("Не удалось прочитать файл.", "err"); };
+    rd.readAsText(f, "utf-8");
+  });
+
+  load();
+  save();   // присваивает id старым записям и копирует их для service worker
+  render();
+  registerBackground();
+
+  // Пока приложение открыто: обновляем плашку (смена суток) и проверяем сроки каждую минуту
+  setInterval(function () { renderExpiring(); runCheck(); }, 60000);
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) { renderExpiring(); runCheck(); }
+  });
+})();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", function () {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  });
+}
+</script>
+</body>
+</html>
